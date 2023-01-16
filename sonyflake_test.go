@@ -9,7 +9,7 @@ import (
 
 var sf *Sonyflake
 
-var startTime int64
+var startTime uint64
 var machineID uint64
 
 func init() {
@@ -60,7 +60,7 @@ func TestSonyflakeOnce(t *testing.T) {
 	fmt.Println("decompose:", Decompose(id))
 }
 
-func currentTime() int64 {
+func currentTime() uint64 {
 	return toSonyflakeTime(time.Now())
 }
 
@@ -91,7 +91,7 @@ func TestSonyflakeFor10Sec(t *testing.T) {
 			t.Errorf("unexpected msb: %d", actualMSB)
 		}
 
-		actualTime := int64(parts["time"])
+		actualTime := parts["time"]
 		overtime := startTime + actualTime - current
 		if overtime > 0 {
 			t.Errorf("unexpected overtime: %d", overtime)
@@ -170,12 +170,12 @@ func TestNilSonyflake(t *testing.T) {
 }
 
 func pseudoSleep(period time.Duration) {
-	sf.startTime -= int64(period) / sonyflakeTimeUnit
+	sf.startTime -= uint64(period) / sonyflakeTimeUnit
 }
 
 func TestNextIDError(t *testing.T) {
 	year := time.Duration(365*24) * time.Hour
-	pseudoSleep(time.Duration(174) * year)
+	pseudoSleep(time.Duration(348) * year)
 	nextID(t)
 
 	pseudoSleep(time.Duration(1) * year)

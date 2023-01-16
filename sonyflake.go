@@ -2,7 +2,7 @@
 //
 // A Sonyflake ID is composed of
 //
-//	39 bits for time in units of 10 msec
+//	40 bits for time in units of 10 msec
 //	 8 bits for a sequence number
 //	16 bits for a machine id
 package sonyflake
@@ -16,9 +16,9 @@ import (
 
 // These constants are the bit lengths of Sonyflake ID parts.
 const (
-	BitLenTime      = 39                               // bit length of time
+	BitLenTime      = 40                               // bit length of time
 	BitLenSequence  = 8                                // bit length of sequence number
-	BitLenMachineID = 63 - BitLenTime - BitLenSequence // bit length of machine id
+	BitLenMachineID = 64 - BitLenTime - BitLenSequence // bit length of machine id
 )
 
 // Settings configures Sonyflake:
@@ -44,8 +44,8 @@ type Settings struct {
 // Sonyflake is a distributed unique ID generator.
 type Sonyflake struct {
 	mutex       *sync.Mutex
-	startTime   int64
-	elapsedTime int64
+	startTime   uint64
+	elapsedTime uint64
 	sequence    uint16
 	machineID   uint16
 }
@@ -64,7 +64,7 @@ func NewSonyflake(st Settings) *Sonyflake {
 		return nil
 	}
 	if st.StartTime.IsZero() {
-		sf.startTime = toSonyflakeTime(time.Date(2014, 9, 1, 0, 0, 0, 0, time.UTC))
+		sf.startTime = toSonyflakeTime(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC))
 	} else {
 		sf.startTime = toSonyflakeTime(st.StartTime)
 	}
@@ -99,7 +99,7 @@ func (sf *Sonyflake) NextID() (uint64, error) {
 		if sf.sequence == 0 {
 			sf.elapsedTime++
 			overtime := sf.elapsedTime - current
-			time.Sleep(sleepTime((overtime)))
+			time.Sleep(sleepTime(overtime))
 		}
 	}
 
@@ -108,15 +108,15 @@ func (sf *Sonyflake) NextID() (uint64, error) {
 
 const sonyflakeTimeUnit = 1e7 // nsec, i.e. 10 msec
 
-func toSonyflakeTime(t time.Time) int64 {
-	return t.UTC().UnixNano() / sonyflakeTimeUnit
+func toSonyflakeTime(t time.Time) uint64 {
+	return uint64(t.UTC().UnixNano()) / sonyflakeTimeUnit
 }
 
-func currentElapsedTime(startTime int64) int64 {
+func currentElapsedTime(startTime uint64) uint64 {
 	return toSonyflakeTime(time.Now()) - startTime
 }
 
-func sleepTime(overtime int64) time.Duration {
+func sleepTime(overtime uint64) time.Duration {
 	return time.Duration(overtime*sonyflakeTimeUnit) -
 		time.Duration(time.Now().UTC().UnixNano()%sonyflakeTimeUnit)
 }
@@ -126,7 +126,7 @@ func (sf *Sonyflake) toID() (uint64, error) {
 		return 0, errors.New("over the time limit")
 	}
 
-	return uint64(sf.elapsedTime)<<(BitLenSequence+BitLenMachineID) |
+	return sf.elapsedTime<<(BitLenSequence+BitLenMachineID) |
 		uint64(sf.sequence)<<BitLenMachineID |
 		uint64(sf.machineID), nil
 }
@@ -189,13 +189,13 @@ func MachineID(id uint64) uint64 {
 // Decompose returns a set of Sonyflake ID parts.
 func Decompose(id uint64) map[string]uint64 {
 	msb := id >> 63
-	time := elapsedTime(id)
+	timestamp := elapsedTime(id)
 	sequence := SequenceNumber(id)
 	machineID := MachineID(id)
 	return map[string]uint64{
 		"id":         id,
 		"msb":        msb,
-		"time":       time,
+		"time":       timestamp,
 		"sequence":   sequence,
 		"machine-id": machineID,
 	}

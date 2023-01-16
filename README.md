@@ -10,13 +10,13 @@ Sonyflake focuses on lifetime and performance on many host/core environment.
 So it has a different bit assignment from Snowflake.
 A Sonyflake ID is composed of
 
-    39 bits for time in units of 10 msec
+    40 bits for time in units of 10 msec
      8 bits for a sequence number
     16 bits for a machine id
 
 As a result, Sonyflake has the following advantages and disadvantages:
 
-- The lifetime (174 years) is longer than that of Snowflake (69 years)
+- The lifetime (348 years) is longer than that of Snowflake (69 years)
 - It can work in more distributed machines (2^16) than Snowflake (2^10)
 - It can generate 2^8 IDs per 10 msec at most in a single machine/thread (slower than Snowflake)
 
@@ -50,7 +50,7 @@ type Settings struct {
 ```
 
 - StartTime is the time since which the Sonyflake time is defined as the elapsed time.
-  If StartTime is 0, the start time of the Sonyflake is set to "2014-09-01 00:00:00 +0000 UTC".
+  If StartTime is 0, the start time of the Sonyflake is set to "2023-01-01 00:00:00 +0000 UTC".
   If StartTime is ahead of the current time, Sonyflake is not created.
 
 - MachineID returns the unique ID of the Sonyflake instance.
@@ -68,12 +68,12 @@ In order to get a new unique ID, you just have to call the method NextID.
 func (sf *Sonyflake) NextID() (uint64, error)
 ```
 
-NextID can continue to generate IDs for about 174 years from StartTime.
+NextID can continue to generate IDs for about 348 years from StartTime.
 But after the Sonyflake time is over the limit, NextID returns an error.
 
 > **Note:**
-> Sonyflake currently does not use the most significant bit of IDs,
-> so you can convert Sonyflake IDs from `uint64` to `int64` safely.
+> This version of Sonyflake uses the most significant bit of IDs,
+> so you CANNOT convert Sonyflake IDs from `uint64` to `int64` safely.
 
 AWS VPC and Docker
 ------------------
